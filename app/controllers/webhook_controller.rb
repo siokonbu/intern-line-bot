@@ -24,9 +24,13 @@ class WebhookController < ApplicationController
       when Line::Bot::Event::Message
         case event.type
         when Line::Bot::Event::MessageType::Text
+
+          # レベル1の実装（特定メッセージに対して、特定の応答を返す。特定メッセージ以外は定形の応答を返す。）
+          text = event.message['text'] == 'おすすめのバンド教えて' ? 'ハヌマーン' : 'わかんない'
+
           message = {
             type: 'text',
-            text: event.message['text']
+            text: text
           }
           client.reply_message(event['replyToken'], message)
         when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
