@@ -29,7 +29,8 @@ class WebhookController < ApplicationController
           if event.message[text] == 'おすすめのバンド教えて' then
             message = 'ハヌマーン'
           else
-            message = 'わかんない'
+            # message = 'わかんない'
+            message = event.message['text']
           end
           # message = event.message['text']
 
