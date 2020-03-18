@@ -59,6 +59,7 @@ class WebhookController < ApplicationController
     uri = URI.parse(URL_ROOT)
     uri.query = URI.encode_www_form({
       limit: LIMIT_NUM,
+      autocorrect: 1,
       method: "artist.getsimilar",
       artist: artist_name,
       api_key: API_KEY,
@@ -77,6 +78,9 @@ class WebhookController < ApplicationController
       text = similar_artists.each_with_object("").with_index {|(artist, text), i|
         text << "#{i+1}: #{artist["name"]}\n"
       }
+      if text.empty?
+        text = "アーティストが見つかりませんでした. "
+      end
     end
     return text.chomp
   end
