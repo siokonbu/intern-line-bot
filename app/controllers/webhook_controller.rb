@@ -74,14 +74,15 @@ class WebhookController < ApplicationController
   def make_reply_text(data)
     if data.nil? || (data["similarartists"]).nil?
       text = ERR_MESSAGE
-    else
-      similar_artists = data["similarartists"]["artist"]
-      text = similar_artists.each_with_object("").with_index {|(artist, text), i|
-        text << "#{i+1}: #{artist["name"]}\n"
-      }
-      if text.empty?
-        text = ERR_MESSAGE
-      end
+      return text.chomps
+    end
+
+    similar_artists = data["similarartists"]["artist"]
+    text = similar_artists.each_with_object("").with_index {|(artist, text), i|
+      text << "#{i+1}: #{artist["name"]}\n"
+    }
+    if text.empty?
+      text = ERR_MESSAGE
     end
     return text.chomp
   end
