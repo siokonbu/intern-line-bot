@@ -54,6 +54,7 @@ class WebhookController < ApplicationController
   API_KEY = ENV["API_KEY"]
   URL_ROOT = 'http://ws.audioscrobbler.com/2.0/'
   LIMIT_NUM = 5
+  ERR_MESSAGE = "アーティストが見つかりませんでした. "
 
   def get_json_from_lastapi(artist_name)
     uri = URI.parse(URL_ROOT)
@@ -72,14 +73,14 @@ class WebhookController < ApplicationController
 
   def make_reply_text(data)
     if data.nil? || (data["similarartists"]).nil?
-      text = "アーティストが見つかりませんでした. "
+      text = ERR_MESSAGE
     else
       similar_artists = data["similarartists"]["artist"]
       text = similar_artists.each_with_object("").with_index {|(artist, text), i|
         text << "#{i+1}: #{artist["name"]}\n"
       }
       if text.empty?
-        text = "アーティストが見つかりませんでした. "
+        text = ERR_MESSAGE
       end
     end
     return text.chomp
