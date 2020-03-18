@@ -27,17 +27,13 @@ class WebhookController < ApplicationController
         case event.type
         when Line::Bot::Event::MessageType::Text
 
-          # レベル2の実装（特定メッセージに対して、Last.fmのAPIをコールして、類似度上位５件のアーティスト名を応答する。https://www.last.fm/api/）
+          # レベル3の実装
           artist_name = event.message['text'].strip
 
-          data = get_similar_artists(artist_name)
+          similar_artists_data = get_similar_artists(artist_name)
 
-          text = make_reply_text(data)
+          message = make_carousel(similar_artists_data)
 
-          message = {
-            type: 'text',
-            text: text
-          }
           client.reply_message(event['replyToken'], message)
         when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
           response = client.get_message_content(event.message['id'])
@@ -55,6 +51,8 @@ class WebhookController < ApplicationController
   URL_ROOT = 'http://ws.audioscrobbler.com/2.0/'
   LIMIT_NUM = 5
   ERR_MESSAGE = "アーティストが見つかりませんでした. "
+  ARTIST_IMG_URL = "https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"
+  IMG_BACK_GROUND_COLOR = "#FFFFFF"
 
   def get_similar_artists(artist_name)
     uri = URI.parse(URL_ROOT)
@@ -71,20 +69,70 @@ class WebhookController < ApplicationController
     return JSON.parse(res.body.to_s)
   end
 
-  def make_reply_text(data)
-    if data.nil? || (data["similarartists"]).nil?
-      text = ERR_MESSAGE
-      return text.chomp
+  def get_artist_toptracks(artist_name)
+    uri = URI.parse(URL_ROOT)
+    uri.query = URI.encode_www_form({
+      autocorrect: 1,
+      limit: LIMIT_NUM,
+      method: "artist.gettoptracks",
+      artist: artist_name,
+      api_key: API_KEY,
+      format: "json"
+    })
+
+    res = Net::HTTP.get_response(uri)
+    return JSON.parse(res.body.to_s)
+  end
+
+  def make_carousel(similar_artists_data)
+
+    # アーティストが検索に引っかからなかった場合、または関連するアーティストが存在しない場合
+    if similar_artists_datasimilar_artists_datasimilar_artists_data.nil? || (similar_artists_datasimilar_artists_data["similarartists"]).nil? || (similar_artists_data["similarartists"]["artist"]).empty?
+      message = {
+        type: 'text',
+        text: ERR_MESSAGE
+      }
+      return message
     end
 
-    similar_artists = data["similarartists"]["artist"]
-    text = similar_artists.each_with_object("").with_index {|(artist, text), i|
-      text << "#{i+1}: #{artist["name"]}\n"
+    similar_artists = similar_artists_data["similarartists"]["artist"]
+
+    columns = similar_artists.each_with_object([]) {|artist, columns|
+      artist_toptracks_data = get_artist_toptracks(artist["name"])
+
+      top_tracks = artist_toptracks_data["toptracks"]["track"]
+
+      top_tracks_ranking = top_tracks.each_with_object("").with_index {|(track, text), i|
+        top_tracks_ranking << "#{i+1}: #{track["name"]}\n"
+      }
+
+      columns.push({
+        thumbnailImageUrl: ARTIST_IMG_URL,
+        imageBackgroundColor: IMG_BACK_GROUND_COLOR,
+        title: artist["name"],
+        text: top_tracks_ranking.chomp,
+        actions: [
+          {
+            type: 'text',
+            label: "このアーティストでさらに検索",
+            text: artist["name"]
+          }
+        ]
+      })
     }
-    if text.empty?
-      text = ERR_MESSAGE
-    end
-    return text.chomp
+
+    message = {
+      type: "template",
+      altText: "this is a carousel template",
+      template: {
+        type: "carousel",
+        columns: columns,
+        imageAspectRatio: "rectangle",
+        imageSize: "cover"
+      }
+    }
+
+    return message
   end
 
 end
