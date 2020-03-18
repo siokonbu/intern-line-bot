@@ -28,41 +28,15 @@ class WebhookController < ApplicationController
         when Line::Bot::Event::MessageType::Text
 
           # レベル2の実装（特定メッセージに対して、Last.fmのAPIをコールして、類似度上位５件のアーティスト名を応答する。https://www.last.fm/api/）
-          api_key = ENV["API_KEY"]
-
           artist_name = event.message['text'].strip
 
-          uri = URI.parse(URL_ROOT)
-          uri.query = URI.encode_www_form({
-            limit: 5,
-            method: "artist.getsimilar",
-            artist: artist_name,
-            api_key: api_key,
-            format: "json"
-          })
+          data = get_json_from_lastapi(artist_name)
 
-          res = Net::HTTP.get_response(uri)
-          data = JSON.parse(res.body.to_s)
-
-          text = ""
-          i = 1
-          begin
-            similar_artists = data["similarartists"]["artist"]
-            similar_artists.each {|artist|
-              text << "#{i}: " + artist["name"] + "\n"
-              i += 1
-            }
-          rescue NoMethodError => e
-            text << "検索に失敗しました. 正しいアーティスト名を入力してください."
-          end
-
-          if text.size == 0
-            text << "検索に失敗しました. 正しいアーティスト名を入力してください."
-          end
+          text = make_reply_text(data)
 
           message = {
             type: 'text',
-            text: text.chomp
+            text: text
           }
           client.reply_message(event['replyToken'], message)
         when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
@@ -76,6 +50,35 @@ class WebhookController < ApplicationController
   end
 
   private
+
+  API_KEY = ENV["API_KEY"]
   URL_ROOT = 'http://ws.audioscrobbler.com/2.0/'
+  LIMIT_NUM = 5
+
+  def get_json_from_lastapi(artist_name)
+    uri = URI.parse(URL_ROOT)
+    uri.query = URI.encode_www_form({
+      limit: LIMIT_NUM,
+      method: "artist.getsimilar",
+      artist: artist_name,
+      api_key: API_KEY,
+      format: "json"
+    })
+
+    res = Net::HTTP.get_response(uri)
+    return JSON.parse(res.body.to_s)
+  end
+
+  def make_reply_text(data)
+    if data.nil? || (data["similarartists"]).nil?
+      text = "アーティストが見つかりませんでした. "
+    else
+      similar_artists = data["similarartists"]["artist"]
+      text = similar_artists.each_with_object("").with_index {|(artist, text), i|
+        text << "#{i+1}: #{artist["name"]}\n"
+      }
+    end
+    return text.chomp
+  end
 
 end
