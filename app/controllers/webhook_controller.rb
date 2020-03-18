@@ -30,7 +30,7 @@ class WebhookController < ApplicationController
           # レベル2の実装（特定メッセージに対して、Last.fmのAPIをコールして、類似度上位５件のアーティスト名を応答する。https://www.last.fm/api/）
           artist_name = event.message['text'].strip
 
-          data = get_json_from_lastapi(artist_name)
+          data = get_similar_artists(artist_name)
 
           text = make_reply_text(data)
 
@@ -56,7 +56,7 @@ class WebhookController < ApplicationController
   LIMIT_NUM = 5
   ERR_MESSAGE = "アーティストが見つかりませんでした. "
 
-  def get_json_from_lastapi(artist_name)
+  def get_similar_artists(artist_name)
     uri = URI.parse(URL_ROOT)
     uri.query = URI.encode_www_form({
       limit: LIMIT_NUM,
