@@ -35,7 +35,7 @@ class WebhookController < ApplicationController
           message = make_carousel(similar_artists_data)
           # 完成したカルーセルテンプレートをユーザに送り返す
           response = client.reply_message(event['replyToken'], message)
-          puts response.body
+          logger.debug(response.body)
 
         when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
           response = client.get_message_content(event.message['id'])
