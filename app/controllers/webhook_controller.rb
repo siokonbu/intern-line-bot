@@ -71,7 +71,7 @@ class WebhookController < ApplicationController
     })
 
     res = Net::HTTP.get_response(uri)
-    return JSON.parse(res.body.to_s)
+    JSON.parse(res.body.to_s)
   end
 
   def get_artist_toptracks(artist_name)
@@ -86,7 +86,7 @@ class WebhookController < ApplicationController
     })
 
     res = Net::HTTP.get_response(uri)
-    return JSON.parse(res.body.to_s)
+    JSON.parse(res.body.to_s)
   end
 
   def make_carousel(similar_artists_data)
@@ -142,7 +142,7 @@ class WebhookController < ApplicationController
       }
     }
 
-    return message
+    message
   end
 
 end
