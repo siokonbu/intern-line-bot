@@ -74,7 +74,7 @@ class WebhookController < ApplicationController
   def make_reply_text(data)
     if data.nil? || (data["similarartists"]).nil?
       text = ERR_MESSAGE
-      return text.chomps
+      return text.chomp
     end
 
     similar_artists = data["similarartists"]["artist"]
