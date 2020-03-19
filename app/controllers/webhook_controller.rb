@@ -91,9 +91,8 @@ class WebhookController < ApplicationController
   end
 
   def make_carousel(similar_artists_data)
-
     # アーティストが検索に引っかからなかった場合、または関連するアーティストが存在しない場合
-    if similar_artists_data.nil? || (similar_artists_data["similarartists"]).nil? || (similar_artists_data["similarartists"]["artist"]).empty?
+    if similar_artists_data.dig("similarartists", "artist", 0).nil?
       message = {
         type: 'text',
         text: ERR_MESSAGE
