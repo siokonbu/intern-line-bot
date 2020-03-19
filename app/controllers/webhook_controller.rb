@@ -89,6 +89,23 @@ class WebhookController < ApplicationController
     JSON.parse(res.body.to_s)
   end
 
+  def make_toptracks_ranking(artist)
+    artist_toptracks_data = get_artist_toptracks(artist["name"])
+
+    top_tracks = artist_toptracks_data["toptracks"]["track"]
+
+    top_tracks_ranking = top_tracks.each_with_object("").with_index {|(track, text), i|
+      row = "#{i+1}: #{track["name"]}\n"
+
+      # 曲名が一行あたり20文字以下になるよう調整
+      if row.size >= MAX_NUM_PER_ROW
+        row = "#{row.slice(0, MAX_NUM_PER_ROW-4)}…\n"
+      end
+      text << row
+    }
+    top_tracks_ranking
+  end
+
   def make_carousel(similar_artists_data)
     # アーティストが検索に引っかからなかった場合、または関連するアーティストが存在しない場合
     if similar_artists_data.dig("similarartists", "artist", 0).nil?
@@ -102,19 +119,7 @@ class WebhookController < ApplicationController
     similar_artists = similar_artists_data["similarartists"]["artist"]
 
     columns = similar_artists.each_with_object([]) {|artist, columns|
-      artist_toptracks_data = get_artist_toptracks(artist["name"])
-
-      top_tracks = artist_toptracks_data["toptracks"]["track"]
-
-      top_tracks_ranking = top_tracks.each_with_object("").with_index {|(track, text), i|
-        row = "#{i+1}: #{track["name"]}\n"
-
-        # 曲名が一行あたり20文字以下になるよう調整
-        if row.size >= MAX_NUM_PER_ROW
-          row = "#{row.slice(0, MAX_NUM_PER_ROW-4)}…\n"
-        end
-        text << row
-      }
+      top_tracks_ranking = make_toptracks_ranking(artist)
 
       columns.push({
         thumbnailImageUrl: ARTIST_IMG_URL,
