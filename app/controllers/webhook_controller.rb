@@ -29,10 +29,16 @@ class WebhookController < ApplicationController
 
           # ユーザから送られてきたテキストを変数化
           artist_name = event.message['text'].strip
-          # Last.fmのAPIを叩いて類似アーティストの情報を取得
-          similar_artists_data = get_similar_artists(artist_name)
-          # 類似アーティストをそれぞれカルーセルテンプレートに当てはめる
-          message = make_carousel(similar_artists_data)
+
+          if artist_name.include?("おすすめのアーティスト") || artist_name.include?("おすすめのバンド")
+            message = get_my_recommendation
+          else
+            # Last.fmのAPIを叩いて類似アーティストの情報を取得
+            similar_artists_data = get_similar_artists(artist_name)
+            # 類似アーティストをそれぞれカルーセルテンプレートに当てはめる
+            message = make_carousel(similar_artists_data)
+          end
+
           # 完成したカルーセルテンプレートをユーザに送り返す
           response = client.reply_message(event['replyToken'], message)
           logger.debug(response.body)
@@ -58,6 +64,45 @@ class WebhookController < ApplicationController
   IMG_BACK_GROUND_COLOR = "#FFFFFF"
   BUTTON_MESSAGE = "ここからさらにディグる"
   MAX_NUM_PER_ROW = 21
+  MY_RECOMMENDED_ARTIST = [
+    "ハヌマーン",
+    "リーガルリリー",
+    "tricot",
+    "ぜったくん",
+    "predawn",
+    "ネクライトーキー",
+    "604",
+    "SPARK!!SOUND!!SHOW!!",
+    "不可思議/wonderboy",
+    "in the blue shirt",
+    "DIALUCK",
+    "HASAMI group",
+    "小南泰葉",
+    "さよならポエジー",
+    "ドミコ",
+    "GEZAN",
+    "Age Factory",
+    "ENTH",
+    "teto",
+    "ナードマグネット",
+    "モーモールルギャバン",
+    "andymori",
+    "plenty",
+    "タカナミ",
+    "SHADOWS",
+    "魔法少女になり隊",
+    "Pa's Lam System",
+    "CHAI"
+  ]
+
+  def get_my_recommendation
+    text = MY_RECOMMENDED_ARTIST.sample
+    message = {
+      type: 'text',
+      text: text
+    }
+    message
+  end
 
   def get_similar_artists(artist_name)
     uri = URI.parse(URL_ROOT)
