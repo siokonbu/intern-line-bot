@@ -57,6 +57,8 @@ class WebhookController < ApplicationController
   ARTIST_IMG_URL = "https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"
   IMG_BACK_GROUND_COLOR = "#FFFFFF"
   BUTTON_MESSAGE = "このアーティストでさらに検索"
+  MAX_NUM_PER_ROW = 21
+
 
   def get_similar_artists(artist_name)
     uri = URI.parse(URL_ROOT)
@@ -109,9 +111,9 @@ class WebhookController < ApplicationController
       top_tracks_ranking = top_tracks.each_with_object("").with_index {|(track, text), i|
         row = "#{i+1}: #{track["name"]}\n"
 
-        # 曲名が一行あたりが２０文字以下になるよう調整
-        if row.size >= 21
-          row = "#{row.slice(0, 17)}…\n"
+        # 曲名が一行あたり20文字以下になるよう調整
+        if row.size >= MAX_NUM_PER_ROW
+          row = "#{row.slice(0, MAX_NUM_PER_ROW-4)}…\n"
         end
         text << row
       }
