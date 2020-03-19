@@ -27,13 +27,13 @@ class WebhookController < ApplicationController
         case event.type
         when Line::Bot::Event::MessageType::Text
 
-          # レベル3の実装
+          # ユーザから送られてきたテキストを変数化
           artist_name = event.message['text'].strip
-
+          # Last.fmのAPIを叩いて類似アーティストの情報を取得
           similar_artists_data = get_similar_artists(artist_name)
-
+          # 類似アーティストをそれぞれカルーセルテンプレートに当てはめる
           message = make_carousel(similar_artists_data)
-
+          # 完成したカルーセルテンプレートをユーザに送り返す
           response = client.reply_message(event['replyToken'], message)
           puts response.body
 
