@@ -53,12 +53,11 @@ class WebhookController < ApplicationController
   URL_ROOT = 'http://ws.audioscrobbler.com/2.0/'
   ARTIST_LIMIT_NUM = 10
   TRACK_LIMIT_NUM = 3
-  ERR_MESSAGE = "アーティストが見つかりませんでした. "
+  ERR_MESSAGE = "ごめん、アーティストが見つかんなかった💦"
   ARTIST_IMG_URL = "https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"
   IMG_BACK_GROUND_COLOR = "#FFFFFF"
-  BUTTON_MESSAGE = "このアーティストでさらに検索"
+  BUTTON_MESSAGE = "ここからさらにディグる"
   MAX_NUM_PER_ROW = 21
-
 
   def get_similar_artists(artist_name)
     uri = URI.parse(URL_ROOT)
