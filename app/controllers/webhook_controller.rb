@@ -34,7 +34,9 @@ class WebhookController < ApplicationController
 
           message = make_carousel(similar_artists_data)
 
-          client.reply_message(event['replyToken'], message)
+          response = client.reply_message(event['replyToken'], message)
+          puts response.body
+
         when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
           response = client.get_message_content(event.message['id'])
           tf = Tempfile.open("content")
@@ -49,15 +51,17 @@ class WebhookController < ApplicationController
 
   API_KEY = ENV["API_KEY"]
   URL_ROOT = 'http://ws.audioscrobbler.com/2.0/'
-  LIMIT_NUM = 5
+  ARTIST_LIMIT_NUM = 10
+  TRACK_LIMIT_NUM = 3
   ERR_MESSAGE = "アーティストが見つかりませんでした. "
   ARTIST_IMG_URL = "https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"
   IMG_BACK_GROUND_COLOR = "#FFFFFF"
+  BUTTON_MESSAGE = "このアーティストでさらに検索"
 
   def get_similar_artists(artist_name)
     uri = URI.parse(URL_ROOT)
     uri.query = URI.encode_www_form({
-      limit: LIMIT_NUM,
+      limit: ARTIST_LIMIT_NUM,
       autocorrect: 1,
       method: "artist.getsimilar",
       artist: artist_name,
@@ -73,7 +77,7 @@ class WebhookController < ApplicationController
     uri = URI.parse(URL_ROOT)
     uri.query = URI.encode_www_form({
       autocorrect: 1,
-      limit: LIMIT_NUM,
+      limit: TRACK_LIMIT_NUM,
       method: "artist.gettoptracks",
       artist: artist_name,
       api_key: API_KEY,
@@ -87,7 +91,7 @@ class WebhookController < ApplicationController
   def make_carousel(similar_artists_data)
 
     # アーティストが検索に引っかからなかった場合、または関連するアーティストが存在しない場合
-    if similar_artists_datasimilar_artists_datasimilar_artists_data.nil? || (similar_artists_datasimilar_artists_data["similarartists"]).nil? || (similar_artists_data["similarartists"]["artist"]).empty?
+    if similar_artists_data.nil? || (similar_artists_data["similarartists"]).nil? || (similar_artists_data["similarartists"]["artist"]).empty?
       message = {
         type: 'text',
         text: ERR_MESSAGE
@@ -103,7 +107,13 @@ class WebhookController < ApplicationController
       top_tracks = artist_toptracks_data["toptracks"]["track"]
 
       top_tracks_ranking = top_tracks.each_with_object("").with_index {|(track, text), i|
-        top_tracks_ranking << "#{i+1}: #{track["name"]}\n"
+        row = "#{i+1}: #{track["name"]}\n"
+
+        # 曲名が一行あたりが２０文字以下になるよう調整
+        if row.size >= 21
+          row = "#{row.slice(0, 17)}…\n"
+        end
+        text << row
       }
 
       columns.push({
@@ -113,10 +123,10 @@ class WebhookController < ApplicationController
         text: top_tracks_ranking.chomp,
         actions: [
           {
-            type: 'text',
-            label: "このアーティストでさらに検索",
+            type: "message",
+            label: BUTTON_MESSAGE,
             text: artist["name"]
-          }
+          },
         ]
       })
     }
