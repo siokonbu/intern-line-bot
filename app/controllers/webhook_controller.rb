@@ -97,7 +97,7 @@ class WebhookController < ApplicationController
     top_tracks_ranking = top_tracks.each_with_object("").with_index {|(track, text), i|
       row = "#{i+1}: #{track["name"]}\n"
 
-      # 曲名が一行あたり20文字以下になるよう調整
+      # 曲名が一行あたり20文字以下になるよう調整（LINEのAPIの仕様上、textが60文字までしか入力できないから）
       if row.size >= MAX_NUM_PER_ROW
         row = "#{row.slice(0, MAX_NUM_PER_ROW-4)}…\n"
       end
