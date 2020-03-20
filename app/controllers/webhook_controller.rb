@@ -173,6 +173,9 @@ class WebhookController < ApplicationController
       # アーティストの画像URLを取得
       artist_image_url = scraping_artist_image(artist["name"].chomp)
 
+      # youtube上でアーティスト名を検索したURL
+      youtube_url = get_youtube_url(artist["name"])
+
       columns.push({
         thumbnailImageUrl: artist_image_url,
         imageBackgroundColor: IMG_BACK_GROUND_COLOR,
@@ -183,6 +186,11 @@ class WebhookController < ApplicationController
             type: "message",
             label: BUTTON_MESSAGE,
             text: artist["name"]
+          },
+          {
+            type: "uri",
+            label: "YouTubeで検索",
+            uri: youtube_url
           },
         ]
       })
@@ -216,6 +224,10 @@ class WebhookController < ApplicationController
     doc = Nokogiri::HTML.parse(html, nil, charset)
     artist_image_url = doc.xpath('//*[@id="mantle_skin"]/header/div[1]/div[1]/div[1]')&.attribute('content')
     artist_image_url.to_s
+  end
+
+  def get_youtube_url(artist_name)
+    'https://www.youtube.com/results?search_query=' + artist_name.gsub(/[\s　]/, '+')
   end
 
 end
