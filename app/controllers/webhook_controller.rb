@@ -1,6 +1,9 @@
 require 'line/bot'
 require 'net/http'
 require 'json'
+require 'nokogiri'
+# URLに簡単にアクセスできるようにするためのライブラリ
+require 'open-uri'
 
 class WebhookController < ApplicationController
   protect_from_forgery except: [:callback] # CSRF対策無効化
@@ -64,6 +67,7 @@ class WebhookController < ApplicationController
   IMG_BACK_GROUND_COLOR = "#FFFFFF"
   BUTTON_MESSAGE = "ここからさらにディグる"
   MAX_NUM_PER_ROW = 21
+  ARTIST_IMG_URL_ROOT = 'https://www.last.fm/music/'
   MY_RECOMMENDED_ARTIST = [
     "ハヌマーン",
     "リーガルリリー",
@@ -166,8 +170,11 @@ class WebhookController < ApplicationController
     columns = similar_artists.each_with_object([]) {|artist, columns|
       top_tracks_ranking = make_toptracks_ranking(artist)
 
+      # アーティストの画像URLを取得
+      artist_image_url = scraping_artist_image(artist["name"].chomp)
+
       columns.push({
-        thumbnailImageUrl: ARTIST_IMG_URL,
+        thumbnailImageUrl: artist_image_url,
         imageBackgroundColor: IMG_BACK_GROUND_COLOR,
         title: artist["name"],
         text: top_tracks_ranking.chomp,
@@ -193,6 +200,22 @@ class WebhookController < ApplicationController
     }
 
     message
+  end
+
+  def scraping_artist_image(artist_name)
+    url = ARTIST_IMG_URL_ROOT + artist_name.gsub(/[\s　]/, '+')
+    url = URI.encode(url)
+
+    charset = nil
+
+    html = open(url) do |f|
+        charset = f.charset
+        f.read
+    end
+
+    doc = Nokogiri::HTML.parse(html, nil, charset)
+    artist_image_url = doc.xpath('//*[@id="mantle_skin"]/header/div[1]/div[1]/div[1]')&.attribute('content')
+    artist_image_url.to_s
   end
 
 end
