@@ -183,14 +183,14 @@ class WebhookController < ApplicationController
         text: top_tracks_ranking.chomp,
         actions: [
           {
-            type: "message",
-            label: BUTTON_MESSAGE,
-            text: artist["name"]
-          },
-          {
             type: "uri",
             label: "YouTubeで検索",
             uri: youtube_url
+          },
+          {
+            type: "message",
+            label: BUTTON_MESSAGE,
+            text: artist["name"]
           },
         ]
       })
